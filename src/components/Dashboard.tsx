@@ -1,24 +1,34 @@
 import { useState } from 'react'
-import type { DailyLog, Profile } from '../types'
-import { calcDailySummary } from '../calc'
+import type { DailyLog, DailyLogs, Profile } from '../types'
+import { calcAvgDailyNetBalance, calcDailySummary, calcGoalProjection } from '../calc'
 import { emptyLog, todayKey } from '../storage'
 import { StepsInput } from './StepsInput'
 import { FoodUpload } from './FoodUpload'
 import { FoodLog } from './FoodLog'
 import { WeightReveal } from './WeightReveal'
+import { GoalProgress } from './GoalProgress'
 import { Settings } from './Settings'
 
 interface Props {
   profile: Profile
   log: DailyLog
+  logs: DailyLogs
   onLogChange: (log: DailyLog) => void
   onProfileChange: (profile: Profile) => void
 }
 
-export function Dashboard({ profile, log, onLogChange, onProfileChange }: Props) {
+export function Dashboard({ profile, log, logs, onLogChange, onProfileChange }: Props) {
   const [showSettings, setShowSettings] = useState(false)
   const currentLog = log ?? emptyLog()
   const summary = calcDailySummary(profile, currentLog)
+
+  const { avgNetBalance, sampleDays } = calcAvgDailyNetBalance(profile, logs)
+  // 記録がまだ無ければ今日の収支にフォールバック
+  const paceNetBalance = sampleDays === 0 ? summary.netBalance : avgNetBalance
+  const projection =
+    profile.goalWeightKg != null
+      ? calcGoalProjection(profile.baselineWeightKg, profile.goalWeightKg, paceNetBalance)
+      : null
 
   const dateLabel = new Date(`${todayKey()}T00:00:00`).toLocaleDateString('ja-JP', {
     year: 'numeric',
@@ -45,6 +55,13 @@ export function Dashboard({ profile, log, onLogChange, onProfileChange }: Props)
 
       <div className="space-y-4">
         <WeightReveal baselineWeightKg={profile.baselineWeightKg} summary={summary} />
+
+        <GoalProgress
+          goalWeightKg={profile.goalWeightKg}
+          projection={projection}
+          sampleDays={sampleDays}
+          onOpenSettings={() => setShowSettings(true)}
+        />
 
         <StepsInput
           steps={currentLog.steps}

@@ -5,6 +5,7 @@ export interface Profile {
   age: number
   gender: Gender
   baselineWeightKg: number
+  goalWeightKg?: number
   claudeApiKey: string
 }
 

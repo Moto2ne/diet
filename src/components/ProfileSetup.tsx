@@ -12,6 +12,7 @@ export function ProfileSetup({ initial, onSave, onCancel }: Props) {
   const [age, setAge] = useState(initial?.age.toString() ?? '')
   const [gender, setGender] = useState<Gender>(initial?.gender ?? 'male')
   const [weightKg, setWeightKg] = useState(initial?.baselineWeightKg.toString() ?? '')
+  const [goalKg, setGoalKg] = useState(initial?.goalWeightKg?.toString() ?? '')
   const [apiKey, setApiKey] = useState(initial?.claudeApiKey ?? '')
 
   const canSave =
@@ -23,6 +24,7 @@ export function ProfileSetup({ initial, onSave, onCancel }: Props) {
       age: Number(age),
       gender,
       baselineWeightKg: Number(weightKg),
+      goalWeightKg: Number(goalKg) > 0 ? Number(goalKg) : undefined,
       claudeApiKey: apiKey.trim(),
     })
   }
@@ -81,6 +83,17 @@ export function ProfileSetup({ initial, onSave, onCancel }: Props) {
             onChange={(e) => setWeightKg(e.target.value)}
             className="input"
             placeholder="65.0"
+          />
+        </Field>
+
+        <Field label="目標体重 (kg)（任意）">
+          <input
+            type="number"
+            step="0.1"
+            value={goalKg}
+            onChange={(e) => setGoalKg(e.target.value)}
+            className="input"
+            placeholder="60.0"
           />
         </Field>
 

@@ -30,6 +30,7 @@ function App() {
     <Dashboard
       profile={profile}
       log={todayLog}
+      logs={logs}
       onLogChange={handleLogChange}
       onProfileChange={handleProfileSave}
     />
