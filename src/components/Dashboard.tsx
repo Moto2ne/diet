@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { DailyLog, DailyLogs, Profile } from '../types'
 import { calcAvgDailyNetBalance, calcDailySummary, calcGoalProjection } from '../calc'
-import { emptyLog, todayKey } from '../storage'
+import { emptyLog, shiftDateKey, todayKey } from '../storage'
 import { StepsInput } from './StepsInput'
 import { FoodUpload } from './FoodUpload'
 import { FoodLog } from './FoodLog'
@@ -13,11 +13,21 @@ interface Props {
   profile: Profile
   log: DailyLog
   logs: DailyLogs
+  selectedDate: string
+  onDateChange: (date: string) => void
   onLogChange: (log: DailyLog) => void
   onProfileChange: (profile: Profile) => void
 }
 
-export function Dashboard({ profile, log, logs, onLogChange, onProfileChange }: Props) {
+export function Dashboard({
+  profile,
+  log,
+  logs,
+  selectedDate,
+  onDateChange,
+  onLogChange,
+  onProfileChange,
+}: Props) {
   const [showSettings, setShowSettings] = useState(false)
   const currentLog = log ?? emptyLog()
   const summary = calcDailySummary(profile, currentLog)
@@ -30,7 +40,9 @@ export function Dashboard({ profile, log, logs, onLogChange, onProfileChange }: 
       ? calcGoalProjection(profile.baselineWeightKg, profile.goalWeightKg, paceNetBalance)
       : null
 
-  const dateLabel = new Date(`${todayKey()}T00:00:00`).toLocaleDateString('ja-JP', {
+  const today = todayKey()
+  const isToday = selectedDate === today
+  const dateLabel = new Date(`${selectedDate}T00:00:00`).toLocaleDateString('ja-JP', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -39,10 +51,38 @@ export function Dashboard({ profile, log, logs, onLogChange, onProfileChange }: 
 
   return (
     <div className="mx-auto max-w-md p-4 pb-12">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-          {dateLabel}
-        </h1>
+      <header className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex flex-1 items-center justify-between rounded-lg border border-neutral-200 px-1 dark:border-neutral-800">
+          <button
+            type="button"
+            onClick={() => onDateChange(shiftDateKey(selectedDate, -1))}
+            className="rounded-md px-2 py-1.5 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            aria-label="前の日"
+          >
+            ‹
+          </button>
+          <label className="relative cursor-pointer text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+            {dateLabel}
+            {isToday && <span className="ml-1 text-xs text-blue-500">(今日)</span>}
+            <input
+              type="date"
+              value={selectedDate}
+              max={today}
+              onChange={(e) => e.target.value && onDateChange(e.target.value)}
+              className="absolute inset-0 cursor-pointer opacity-0"
+              aria-label="日付を選択"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => onDateChange(shiftDateKey(selectedDate, 1))}
+            disabled={isToday}
+            className="rounded-md px-2 py-1.5 text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-neutral-800"
+            aria-label="次の日"
+          >
+            ›
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => setShowSettings(true)}
@@ -65,6 +105,7 @@ export function Dashboard({ profile, log, logs, onLogChange, onProfileChange }: 
 
         <StepsInput
           steps={currentLog.steps}
+          label={isToday ? '今日の歩数' : 'この日の歩数'}
           onChange={(steps) => onLogChange({ ...currentLog, steps })}
         />
 
@@ -77,7 +118,7 @@ export function Dashboard({ profile, log, logs, onLogChange, onProfileChange }: 
 
         <div>
           <h3 className="mb-2 font-semibold text-neutral-900 dark:text-neutral-50">
-            今日の食事
+            {isToday ? '今日の食事' : 'この日の食事'}
           </h3>
           <FoodLog
             entries={currentLog.foodEntries}

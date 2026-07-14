@@ -7,6 +7,7 @@ import { Dashboard } from './components/Dashboard'
 function App() {
   const [profile, setProfile] = useState<Profile | null>(() => loadProfile())
   const [logs, setLogs] = useState<DailyLogs>(() => loadDailyLogs())
+  const [selectedDate, setSelectedDate] = useState(() => todayKey())
 
   const handleProfileSave = (p: Profile) => {
     saveProfile(p)
@@ -17,11 +18,10 @@ function App() {
     return <ProfileSetup onSave={handleProfileSave} />
   }
 
-  const key = todayKey()
-  const todayLog = logs[key] ?? emptyLog()
+  const selectedLog = logs[selectedDate] ?? emptyLog()
 
   const handleLogChange = (log: DailyLog) => {
-    const next = { ...logs, [key]: log }
+    const next = { ...logs, [selectedDate]: log }
     saveDailyLogs(next)
     setLogs(next)
   }
@@ -29,8 +29,10 @@ function App() {
   return (
     <Dashboard
       profile={profile}
-      log={todayLog}
+      log={selectedLog}
       logs={logs}
+      selectedDate={selectedDate}
+      onDateChange={setSelectedDate}
       onLogChange={handleLogChange}
       onProfileChange={handleProfileSave}
     />
